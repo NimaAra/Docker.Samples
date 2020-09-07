@@ -1,0 +1,29 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
+WORKDIR /src
+
+COPY *.sln .
+COPY ["Docker.Sample.App/Docker.Sample.App.csproj", "Docker.Sample.App/"]
+COPY ["Docker.Sample.Core/Docker.Sample.Core.csproj", "Docker.Sample.Core/"]
+COPY ["Docker.Sample.Tests.Unit/Docker.Sample.Tests.Unit.csproj", "Docker.Sample.Tests.Unit/"]
+RUN dotnet restore
+
+COPY . .
+RUN dotnet build --nologo --no-restore -c Release
+
+# create a new build target called testrunner (used to only run the tests instead of the full image)
+FROM build AS testrunner
+WORKDIR /src/Docker.Sample.Tests.Unit
+
+CMD ["dotnet", "test", "--nologo", "--no-restore", "-c:Release", "--logger:trx", "--filter:is_passing"]
+
+FROM build AS test
+WORKDIR /src/Docker.Sample.Tests.Unit
+RUN dotnet test --nologo --no-restore -c Release -v m --filter "is_passing"
+
+FROM build AS publish
+RUN dotnet publish "Docker.Sample.App/Docker.Sample.App.csproj" --nologo --no-build -c Release -o /src/publish
+
+FROM mcr.microsoft.com/dotnet/core/runtime:3.1-buster-slim AS base
+WORKDIR /app
+COPY --from=publish /src/publish .
+ENTRYPOINT ["dotnet", "Docker.Sample.App.dll"]

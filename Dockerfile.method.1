@@ -1,0 +1,5 @@
+FROM mcr.microsoft.com/dotnet/core/runtime-deps:3.1-alpine
+
+COPY dist/ app/
+WORKDIR /app
+ENTRYPOINT ["./Docker.Sample.App"]

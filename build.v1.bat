@@ -9,7 +9,7 @@ set output=.\dist
 :: Restore, Build, run the tests and publish the app.
 dotnet restore %project% -r %rid%
 dotnet build %project% --nologo --no-restore -c %buildType% -r %rid% /p:Version=%releaseVersion%
-dotnet test --nologo -v m --no-build -r %rid% --filter "is_passing" -c %buildType%
+dotnet test --nologo --no-restore -v m -r %rid% --filter "is_passing" -c %buildType%
 dotnet publish %project% --nologo --no-build -c %buildType% -o %output% -r %rid% --self-contained true /p:PublishTrimmed=true
 
 :: Build the container.
